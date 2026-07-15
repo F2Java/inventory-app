@@ -241,12 +241,87 @@ tbody tr { transition: background .15s; }
 @media (min-width: 640px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
 .chart-container { height: 200px; display: flex; align-items: flex-end; }
 .loading { opacity: .5; pointer-events: none; }
+
+/* ─── B2B HELP BUTTON ──────────────────────────────────────────────── */
+.help-bubble {
+  position: fixed; bottom: 100px; right: 24px; z-index: 150;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, #3f51b5, #7c4dff);
+  color: white; border: none; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(63,81,181,.5);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .25s, box-shadow .25s;
+}
+.help-bubble:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(63,81,181,.6); }
+.help-bubble:active { transform: scale(.95); }
+.help-icon { font-size: 22px; font-weight: 700; position: relative; z-index: 1; }
+.help-pulse {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: rgba(63,81,181,.3); animation: helpPulse 2s infinite;
+}
+@keyframes helpPulse {
+  0% { transform: scale(1); opacity: .6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ─── HELP STEP DOTS ───────────────────────────────────────────────── */
+.help-dots { display: flex; gap: 6px; justify-content: center; margin: 8px 0 14px; }
+.help-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--gray-300);
+  transition: all .3s; cursor: pointer;
+}
+.help-dot.active { background: var(--indigo-500); transform: scale(1.3); }
+.help-step-title { font-size: 15px; font-weight: 600; color: var(--indigo-700); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.help-step-desc { font-size: 13px; color: var(--gray-700); line-height: 1.6; }
+.help-step-desc ul { margin: 8px 0; padding-left: 20px; }
+.help-step-desc li { margin-bottom: 6px; }
+.help-note {
+  margin-top: 14px; padding: 10px 14px; border-radius: 8px;
+  font-size: 12px; line-height: 1.5;
+}
+.help-note.info { background: var(--indigo-100); color: var(--indigo-800); }
+.help-note.success { background: var(--green-100); color: #2e7d32; }
+.help-progress-bar {
+  height: 4px; background: var(--gray-200); border-radius: 99px; margin-bottom: 16px; overflow: hidden;
+}
+.help-progress-fill {
+  height: 100%; background: linear-gradient(90deg, #3f51b5, #7c4dff);
+  border-radius: 99px; transition: width .5s ease;
+}
 </style>
 </head>
 <body>
 
 <!-- ─── TOAST ────────────────────────────────────────────────────────── -->
 <div id="toast" class="toast"></div>
+
+<!-- ─── B2B HELP BUTTON ──────────────────────────────────────────────── -->
+<button class="help-bubble" id="helpBtn" onclick="openHelp()" title="B2B Guide">
+  <span class="help-icon">?</span>
+  <span class="help-pulse"></span>
+</button>
+
+<!-- ─── HELP TUTORIAL MODAL ───────────────────────────────────────────── -->
+<div class="modal-overlay" id="help-modal">
+  <div class="modal" style="max-width:550px">
+    <div class="modal-header" style="background:linear-gradient(135deg,#3f51b5,#7c4dff);color:white;border-radius:16px 16px 0 0">
+      <h3 style="color:white">🛒 B2B E-Commerce Guide</h3>
+      <button class="modal-close" onclick="closeHelp()" style="color:rgba(255,255,255,.7)">✕</button>
+    </div>
+    <div class="modal-body" id="help-body" style="padding:20px 24px">
+      <!-- Step content rendered by JS -->
+    </div>
+    <div class="modal-footer" id="help-footer" style="padding:12px 24px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:11px;color:var(--gray-400)" id="help-counter">1/5</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="closeHelp()" style="font-size:11px">✕ Tutup</button>
+        <button class="btn btn-primary btn-sm" id="help-next-btn" onclick="nextHelpStep()" style="font-size:11px">
+          Lanjut ➜
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ─── LOGIN SCREEN ─────────────────────────────────────────────────── -->
 <div id="login-screen">
@@ -1101,6 +1176,143 @@ function renderReport() {
       }).join('')}</tbody>
     </table>
   `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  B2B HELP STEPS
+// ═══════════════════════════════════════════════════════════════════════
+const HELP_STEPS = [
+  {
+    title: "1. Register Akun B2B", emoji: "📝",
+    desc: `<strong>Cara daftar sebagai customer B2B:</strong>
+    <ul>
+      <li>Klik tombol <strong>"Register"</strong> atau <strong>"Daftar"</strong> di halaman login e-commerce</li>
+      <li>Isi formulir dengan data perusahaan:
+        <ul>
+          <li>Nama Perusahaan (Company Name)</li>
+          <li>Nama Kontak Person</li>
+          <li>Alamat Email — untuk login dan invoice</li>
+          <li>Nomor Telepon/HP</li>
+          <li>Password — minimal 6 karakter</li>
+        </ul>
+      </li>
+      <li>Setelah submit, status akun: <strong>PENDING</strong> ⏳</li>
+      <li>Tunggu admin menyetujui pendaftaran Anda</li>
+    </ul>`,
+    note: "Pastikan data perusahaan diisi dengan benar karena akan digunakan untuk invoice dan dokumen resmi.",
+    noteType: "info",
+  },
+  {
+    title: "2. Tunggu Approval Admin", emoji: "⏳",
+    desc: `<strong>Setelah registrasi, admin akan memverifikasi akun Anda:</strong>
+    <ul>
+      <li>Admin akan mengecek data perusahaan Anda</li>
+      <li>Jika disetujui, status berubah menjadi <strong>ACTIVE</strong> ✅</li>
+      <li>Jika ditolak, Anda bisa hubungi admin untuk info lebih lanjut</li>
+      <li>Proses approval biasanya <strong>1x24 jam</strong> kerja</li>
+    </ul>
+    <p style="margin-top:10px">Setelah aktif, Anda akan menerima notifikasi via email bahwa akun sudah bisa digunakan.</p>`,
+    note: "Jika belum mendapatkan konfirmasi dalam 2 hari, silakan hubungi admin melalui email atau telepon.",
+    noteType: "info",
+  },
+  {
+    title: "3. Login & Browse Produk", emoji: "🔍",
+    desc: `<strong>Setelah akun aktif, Anda bisa login dan mulai berbelanja:</strong>
+    <ul>
+      <li>Login dengan email dan password yang sudah didaftarkan</li>
+      <li>Browse katalog produk — lihat gambar, deskripsi, dan harga</li>
+      <li>Gunakan fitur <strong>search</strong> untuk mencari produk spesifik</li>
+      <li>Filter produk berdasarkan kategori atau rentang harga</li>
+      <li>Klik produk untuk lihat detail lengkap, stok, dan varian</li>
+      <li>Atur quantity, pilih varian (ukuran/warna), lalu klik <strong>Add to Cart</strong></li>
+    </ul>`,
+    note: "Harga yang ditampilkan sudah termasuk PPN. Minimum quantity pembelian: 1 pcs per SKU.",
+    noteType: "info",
+  },
+  {
+    title: "4. Checkout & Order", emoji: "🛒",
+    desc: `<strong>Proses checkout untuk membuat pesanan:</strong>
+    <ul>
+      <li>Buka halaman <strong>Cart</strong> untuk review produk yang dipilih</li>
+      <li>Atur quantity setiap item (jika perlu)</li>
+      <li>Lihat <strong>total belanja</strong> termasuk pajak dan biaya pengiriman</li>
+      <li>Klik <strong>Checkout</strong> untuk melanjutkan</li>
+      <li>Isi alamat pengiriman dan catatan (opsional)</li>
+      <li>Konfirmasi pesanan → klik <strong>Place Order</strong></li>
+    </ul>
+    <p style="margin-top:10px">Status order: <strong>PENDING</strong> — menunggu admin mengkonfirmasi pesanan Anda.</p>`,
+    note: "Setelah checkout, Anda akan menerima email konfirmasi dengan nomor order. Simpan nomor tersebut!",
+    noteType: "success",
+  },
+  {
+    title: "5. Konfirmasi & Invoice", emoji: "✅",
+    desc: `<strong>Setelah admin memproses pesanan:</strong>
+    <ul>
+      <li>Admin akan <strong>confirm order</strong> dan otomatis:</li>
+      <ul>
+        <li>✅ Cek & kurangi stok dari warehouse</li>
+        <li>✅ Generate <strong>Invoice</strong> (INV-202X-XXXX)</li>
+        <li>✅ Catat transaksi di akuntansi</li>
+      </ul>
+      <li>Anda bisa lihat invoice di halaman order history</li>
+      <li>Lakukan pembayaran sesuai instruksi di invoice</li>
+      <li>Setelah pembayaran dikonfirmasi, status berubah jadi <strong>PAID</strong> ✅</li>
+      <li>Barang akan diproses pengiriman</li>
+    </ul>
+    <p style="margin-top:10px">Anda bisa cek status pengiriman di halaman <strong>Tracking</strong>.</p>`,
+    note: "Jika ada pertanyaan tentang invoice atau pembayaran, silakan hubungi tim billing kami.",
+    noteType: "success",
+  },
+]
+
+let currentHelpStep = 0
+
+function openHelp() {
+  currentHelpStep = 0
+  document.getElementById('help-modal').classList.add('open')
+  renderHelpStep()
+}
+function closeHelp() {
+  document.getElementById('help-modal').classList.remove('open')
+}
+function renderHelpStep() {
+  const step = HELP_STEPS[currentHelpStep]
+  const body = document.getElementById('help-body')
+  const total = HELP_STEPS.length
+  const pct = ((currentHelpStep + 1) / total) * 100
+
+  const dots = HELP_STEPS.map((_, i) =>
+    `<span class="help-dot ${i === currentHelpStep ? 'active' : ''}" onclick="goToHelpStep(${i})"></span>`
+  ).join('')
+
+  body.innerHTML = `
+    <div class="help-progress-bar"><div class="help-progress-fill" style="width:${pct}%"></div></div>
+    <div class="help-dots">${dots}</div>
+    <div class="help-step-title">${step.emoji} ${step.title}</div>
+    <div class="help-step-desc">${step.desc}</div>
+    <div class="help-note ${step.noteType}">💡 ${step.note}</div>
+  `
+
+  document.getElementById('help-counter').textContent = `${currentHelpStep + 1}/${total}`
+  const nextBtn = document.getElementById('help-next-btn')
+  if (currentHelpStep === total - 1) {
+    nextBtn.innerHTML = '🎉 Selesai'
+  } else {
+    nextBtn.innerHTML = 'Lanjut ➜'
+  }
+}
+function nextHelpStep() {
+  if (currentHelpStep < HELP_STEPS.length - 1) {
+    currentHelpStep++
+    renderHelpStep()
+  } else {
+    closeHelp()
+    toast('success', '🎉 Terima kasih! Anda sudah mempelajari flow B2B. Selamat berbelanja!')
+  }
+}
+function goToHelpStep(idx) {
+  currentHelpStep = idx
+  renderHelpStep()
 }
 
 // ═══════════════════════════════════════════════════════════════════════
