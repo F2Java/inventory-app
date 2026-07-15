@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "memorize": {
+      "source": "neolabhq/context-engineering-kit",
+      "sourceType": "github",
+      "skillPath": "plugins/reflexion/skills/memorize/SKILL.md",
+      "computedHash": "6fd7d0eb1f41a842a4f8064c07a43bd3d6844d03430e18b8d62657985463451d"
+    }
+  }
+}
