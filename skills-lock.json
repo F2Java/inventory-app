@@ -67,6 +67,12 @@
       "skillPath": "plugins/reflexion/skills/memorize/SKILL.md",
       "computedHash": "6fd7d0eb1f41a842a4f8064c07a43bd3d6844d03430e18b8d62657985463451d"
     },
+    "offers": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "skillPath": "skills/offers/SKILL.md",
+      "computedHash": "4e49425fc003bfc113cee7757ffa57de0859b1903dec89973cc599c42fca8942"
+    },
     "recall": {
       "source": "rohitg00/agentmemory",
       "sourceType": "github",
