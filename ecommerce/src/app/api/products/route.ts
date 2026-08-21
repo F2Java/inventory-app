@@ -16,7 +16,7 @@ export async function GET() {
       orderBy: { name: "asc" },
     })
 
-    const mapped = products.map((p) => ({
+    const mapped = products.map((p: any) => ({
       id: p.id,
       name: p.name,
       description: p.description,
@@ -25,10 +25,10 @@ export async function GET() {
       unit: p.unit,
       image: p.images[0]?.url || null,
       thumbnail: p.images[0]?.thumbnail || null,
-      category: p.category.name,
-      totalStock: p.warehouseStock.reduce((sum, ws) => sum + ws.quantity, 0),
-      warehouseStock: p.warehouseStock.map((ws) => ({ warehouse: ws.warehouse.name, quantity: ws.quantity })),
-      uom: p.uoms[0]?.uom?.abbreviation || p.unit,
+      category: p.category?.name || "",
+      totalStock: p.warehouseStock?.reduce((sum: number, ws: any) => sum + ws.quantity, 0) || 0,
+      warehouseStock: p.warehouseStock?.map((ws: any) => ({ warehouse: ws.warehouse?.name || "", quantity: ws.quantity })) || [],
+      uom: p.uoms?.[0]?.uom?.abbreviation || p.unit,
     }))
 
     return NextResponse.json({ data: mapped })
