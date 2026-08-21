@@ -44,6 +44,7 @@ model User {
   activityLogs           ActivityLog[]
   stockAdjustments       StockAdjustment[] @relation("RequestedAdjustments")
   approvedAdjustments    StockAdjustment[] @relation("ApprovedAdjustments")
+  carsListed             Car[]
 
   @@map("users")
 }
@@ -1382,4 +1383,378 @@ model ActivityLog {
   createdAt DateTime @default(now())
 
   @@map("activity_logs")
+}
+
+// ─── AutoCar: Automotive E-Commerce ─────────────────────────────────────────
+
+enum CarCondition {
+  NEW
+  USED
+  CERTIFIED_PRE_OWNED
+}
+
+enum CarStatus {
+  AVAILABLE
+  SOLD
+  RESERVED
+  PENDING
+  DRAFT
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  ELECTRIC
+  HYBRID
+  PLUGIN_HYBRID
+  CNG
+  LPG
+}
+
+enum TransmissionType {
+  AUTOMATIC
+  MANUAL
+  CVT
+  AUTOMATED_MANUAL
+  DCT
+}
+
+enum CarBodyType {
+  SEDAN
+  SUV
+  HATCHBACK
+  COUPE
+  CONVERTIBLE
+  WAGON
+  PICKUP_TRUCK
+  VAN
+  MINIVAN
+  ROADSTER
+  OTHER
+}
+
+model Car {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  title           String
+  description     String?         @db.Text
+
+  // Car specifications
+  make            String          // Toyota, Honda, BMW, etc.
+  model           String          // Camry, Civic, X5, etc.
+  year            Int
+  condition       CarCondition    @default(USED)
+  status          CarStatus       @default(AVAILABLE)
+  bodyType        CarBodyType     @default(SEDAN)
+  fuelType        FuelType        @default(GASOLINE)
+  transmission    TransmissionType @default(AUTOMATIC)
+
+  // Technical specs
+  engine          String?         // "2.0L Turbocharged Inline-4"
+  horsepower      Int?
+  torque          String?         // "350 Nm"
+  engineDisplacement String?      // "1998 cc"
+  numCylinders    Int?
+  drivetrain      String?         // "FWD", "RWD", "AWD", "4WD"
+  numDoors        Int?
+  numSeats        Int?
+  numGears        Int?
+
+  // Dimensions & weight
+  length          Decimal?        @db.Decimal(8, 2)  // mm
+  width           Decimal?        @db.Decimal(8, 2)  // mm
+  height          Decimal?        @db.Decimal(8, 2)  // mm
+  wheelbase       Decimal?        @db.Decimal(8, 2)  // mm
+  curbWeight      Decimal?        @db.Decimal(8, 2)  // kg
+  groundClearance Decimal?        @db.Decimal(8, 2)  // mm
+
+  // Performance
+  topSpeed        Int?            // km/h
+  acceleration    String?         // "0-100 km/h in 6.2s"
+  fuelConsumption String?         // "7.5 L/100km"
+  co2Emission     String?         // "120 g/km"
+  range           Int?            // km (for EV/hybrid)
+
+  // Usage (for used cars)
+  mileage         Int?            // km
+  previousOwners  Int?            @default(0)
+  accidentHistory Boolean?        @default(false)
+  serviceHistory  String?         @db.Text
+  vin             String?         // Vehicle Identification Number
+  licensePlate    String?
+
+  // Pricing
+  price           Decimal         @db.Decimal(15, 2)
+  currency        String          @default("IDR")
+  priceOnRequest  Boolean         @default(false)
+  originalPrice   Decimal?        @db.Decimal(15, 2) // MSRP or original price
+  negotiable      Boolean         @default(true)
+  installmentAvail Boolean        @default(true)
+  installmentFrom Decimal?        @db.Decimal(15, 2) // Monthly installment
+  downPayment     Decimal?        @db.Decimal(15, 2)
+
+  // Color & appearance
+  exteriorColor   String?
+  interiorColor   String?
+  colorCode       String?         // Hex code for visual representation
+
+  // Features & equipment
+  features        String[]        // Array of feature strings
+  safetyRating    String?         // "5-star NCAP"
+  airbagCount     Int?
+
+  // Media
+  coverImage      String?         @db.Text
+  thumbnailUrl    String?         @db.Text
+  videoUrl        String?         @db.Text               // Primary video URL
+  videoThumbnail  String?         @db.Text               // Video thumbnail URL
+  images          CarImage[]
+  videos          CarVideo[]
+  virtualTourUrl  String?         @db.Text               // 360° virtual tour
+
+  // Location
+  city            String?
+  province        String?
+  address         String?         @db.Text
+  latitude        Decimal?        @db.Decimal(10, 7)
+  longitude       Decimal?        @db.Decimal(10, 7)
+
+  // Seller info
+  sellerId        String?
+  seller          User?           @relation(fields: [sellerId], references: [id])
+  sellerType      String          @default("individual") // "individual", "dealer", "showroom"
+  dealerName      String?
+  dealerLicense   String?
+  dealerPhone     String?
+  dealerEmail     String?
+  dealerWhatsapp  String?         // WhatsApp number with country code
+  dealerWebsite   String?
+
+  // Metadata
+  views           Int             @default(0)
+  favorites       Int             @default(0)
+  isFeatured      Boolean         @default(false)
+  isPromoted      Boolean         @default(false)
+  promotedUntil   DateTime?
+  publishedAt     DateTime?
+  expiresAt       DateTime?       // Listing expiration
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  inquiries       CarInquiry[]
+  favorites_rel   CarFavorite[]
+  promotions      CarPromotion[]
+  category        CarCategory?    @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+
+  @@index([make, model, year])
+  @@index([condition, status])
+  @@index([price])
+  @@index([city, province])
+  @@index([isFeatured, isPromoted])
+  @@index([createdAt])
+  @@map("cars")
+}
+
+model CarImage {
+  id        String   @id @default(cuid())
+  carId     String
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  url       String   @db.Text
+  thumbnail String?  @db.Text
+  alt       String?
+  caption   String?
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("car_images")
+}
+
+model CarVideo {
+  id          String   @id @default(cuid())
+  carId       String
+  car         Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  url         String   @db.Text
+  thumbnailUrl String? @db.Text
+  title       String?
+  description String?  @db.Text
+  duration    Int?     // seconds
+  isPrimary   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@map("car_videos")
+}
+
+model CarCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String?
+  imageUrl    String?  @db.Text
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cars        Car[]
+
+  @@map("car_categories")
+}
+
+model CarInquiry {
+  id          String   @id @default(cuid())
+  carId       String
+  car         Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  name        String
+  email       String
+  phone       String?
+  message     String?  @db.Text
+  inquiryType String   @default("general") // "purchase", "trade_in", "financing", "general"
+  preferredContact String @default("whatsapp") // "whatsapp", "email", "phone"
+  status      String   @default("new") // "new", "contacted", "converted", "closed"
+  respondedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@map("car_inquiries")
+}
+
+model CarFavorite {
+  id        String   @id @default(cuid())
+  carId     String
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  userId    String?
+  sessionId String?  // For anonymous users
+  createdAt DateTime @default(now())
+
+  @@unique([carId, userId])
+  @@unique([carId, sessionId])
+  @@map("car_favorites")
+}
+
+model CarPromotion {
+  id            String   @id @default(cuid())
+  carId         String
+  car           Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  promotionType String   @default("featured") // "featured", "banner", "homepage", "email", "whatsapp"
+  startDate     DateTime
+  endDate       DateTime?
+  discountPercent Int?
+  specialPrice  Decimal? @db.Decimal(15, 2)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@map("car_promotions")
+}
+
+// ─── WhatsApp & Email Promotions ────────────────────────────────────────────
+
+enum PromotionChannel {
+  WHATSAPP
+  EMAIL
+  BOTH
+}
+
+enum PromotionStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+model PromotionCampaign {
+  id              String            @id @default(cuid())
+  name            String
+  description     String?           @db.Text
+  channel         PromotionChannel  @default(BOTH)
+  status          PromotionStatus   @default(DRAFT)
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  subject         String?           // Email subject
+  messageTemplate String?           @db.Text // Message template with {{variables}}
+  imageUrl        String?           @db.Text
+  targetUrl       String?           @db.Text // CTA link
+  totalSent       Int               @default(0)
+  totalOpened     Int               @default(0)
+  totalClicked    Int               @default(0)
+  totalFailed     Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  recipients      PromotionRecipient[]
+  whatsappLogs    WhatsAppLog[]
+  emailLogs       EmailLog[]
+
+  @@map("promotion_campaigns")
+}
+
+model PromotionRecipient {
+  id           String             @id @default(cuid())
+  campaignId   String
+  campaign     PromotionCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name         String?
+  email        String?
+  phone        String? // WhatsApp number
+  carId        String? // Specific car being promoted
+  customData   Json?   // Additional template variables
+  sent         Boolean            @default(false)
+  opened       Boolean            @default(false)
+  clicked      Boolean            @default(false)
+  sentAt       DateTime?
+  openedAt     DateTime?
+  clickedAt    DateTime?
+  errorMessage String?
+  createdAt    DateTime           @default(now())
+
+  @@map("promotion_recipients")
+}
+
+model WhatsAppLog {
+  id           String             @id @default(cuid())
+  campaignId   String?
+  campaign     PromotionCampaign? @relation(fields: [campaignId], references: [id])
+  toNumber     String
+  message      String             @db.Text
+  status       String             @default("sent") // "sent", "delivered", "read", "failed"
+  errorMessage String?
+  twilioSid    String?
+  metadata     Json?
+  createdAt    DateTime           @default(now())
+
+  @@map("whatsapp_logs")
+}
+
+model EmailLog {
+  id           String             @id @default(cuid())
+  campaignId   String?
+  campaign     PromotionCampaign? @relation(fields: [campaignId], references: [id])
+  toEmail      String
+  subject      String
+  body         String             @db.Text
+  status       String             @default("sent") // "sent", "delivered", "opened", "bounced", "failed"
+  errorMessage String?
+  providerId   String?            // SendGrid/Resend message ID
+  metadata     Json?
+  createdAt    DateTime           @default(now())
+
+  @@map("email_logs")
+}
+
+model ContactSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  source    String   @default("website") // "website", "whatsapp", "referral"
+  isActive  Boolean  @default(true)
+  tags      String[] // ["new_cars", "used_cars", "suv", "electric"]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_subscribers")
 }
