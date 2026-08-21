@@ -1,10 +1,17 @@
 import twilio from "twilio"
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID || ""
-const authToken = process.env.TWILIO_AUTH_TOKEN || ""
 const whatsappFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886" // Twilio sandbox
 
-const client = accountSid && authToken ? twilio(accountSid, authToken) : null
+let client: ReturnType<typeof twilio> | null = null
+function getClient() {
+  if (client) return client
+  const accountSid = process.env.TWILIO_ACCOUNT_SID || ""
+  const authToken = process.env.TWILIO_AUTH_TOKEN || ""
+  if (accountSid && authToken && accountSid.startsWith("AC")) {
+    client = twilio(accountSid, authToken)
+  }
+  return client
+}
 
 // ─── Base Sender ─────────────────────────────────────────────────────────────
 
@@ -15,7 +22,8 @@ interface SendWhatsAppOptions {
 }
 
 export async function sendWhatsAppMessage(options: SendWhatsAppOptions) {
-  if (!client) {
+  const twilioClient = getClient()
+  if (!twilioClient) {
     console.warn("Twilio not configured. Skipping WhatsApp send.")
     return { success: false, id: null, error: "Twilio not configured" }
   }
@@ -26,7 +34,7 @@ export async function sendWhatsAppMessage(options: SendWhatsAppOptions) {
       ? `whatsapp:${options.to}`
       : `whatsapp:+${options.to.replace(/[^0-9]/g, "")}`
 
-    const result = await client.messages.create({
+    const result = await twilioClient.messages.create({
       from: whatsappFrom,
       to: toNumber,
       body: options.message,
