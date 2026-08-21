@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Grid, List, SlidersHorizontal, X } from "lucide-react"
 import { SearchBar } from "@/components/ui/search-bar"
@@ -86,7 +86,7 @@ const filterOptions = {
   conditions: ["NEW", "USED", "CERTIFIED_PRE_OWNED"],
 }
 
-export default function CarsPage() {
+function CarsContent() {
   const searchParams = useSearchParams()
   const [search, setSearch] = useState(searchParams.get("search") || "")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -231,5 +231,17 @@ export default function CarsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CarsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <CarsContent />
+    </Suspense>
   )
 }
