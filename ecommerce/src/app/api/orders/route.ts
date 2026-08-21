@@ -20,11 +20,11 @@ export async function GET(req: NextRequest) {
       take: 50,
     })
 
-    const mapped = orders.map((o) => ({
+    const mapped = orders.map((o: any) => ({
       id: o.id,
       orderNumber: o.orderNumber,
       status: o.status,
-      items: o.items.map((i) => ({
+      items: o.items.map((i: any) => ({
         productName: i.product.name,
         sku: i.product.sku,
         quantity: i.quantity,

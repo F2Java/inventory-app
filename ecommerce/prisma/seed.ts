@@ -1,4 +1,5 @@
-import { PrismaClient, CarCondition, CarStatus, FuelType, TransmissionType, CarBodyType } from "@prisma/client"
+import { PrismaClient } from "@prisma/client"
+import type { CarCondition, CarStatus, FuelType, TransmissionType, CarBodyType } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
